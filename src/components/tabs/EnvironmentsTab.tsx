@@ -70,9 +70,6 @@ export function EnvironmentsTab({ projectId, onEnvsChange }: EnvironmentsTabProp
               <p className="font-medium text-gray-900 text-sm">{env.name}</p>
               <p className="text-xs text-gray-500 mt-0.5">
                 Branch: <span className="font-mono">{env.target_branch}</span>
-                {env.domain_name && (
-                  <> &middot; Domain: <span className="font-mono">{env.domain_name}</span></>
-                )}
               </p>
             </div>
             <div className="flex gap-3">
@@ -131,7 +128,6 @@ function EnvModal({
 }) {
   const [name, setName] = useState(env?.name ?? "");
   const [branch, setBranch] = useState(env?.target_branch ?? "");
-  const [domain, setDomain] = useState(env?.domain_name ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -141,14 +137,10 @@ function EnvModal({
     setError(null);
     try {
       if (env) {
-        await updateEnv(env.id, { name, target_branch: branch, domain_name: domain });
-        onSave({ ...env, name, target_branch: branch, domain_name: domain });
+        await updateEnv(env.id, { name, target_branch: branch, domain_name: "" });
+        onSave({ ...env, name, target_branch: branch, domain_name: "" });
       } else {
-        const created = await createEnv(projectId, {
-          name,
-          target_branch: branch,
-          domain_name: domain,
-        });
+        const created = await createEnv(projectId, { name, target_branch: branch, domain_name: "" });
         onSave(created);
       }
     } catch (e: unknown) {
@@ -179,15 +171,6 @@ function EnvModal({
             onChange={(e) => setBranch(e.target.value)}
             required
             placeholder="main"
-          />
-        </div>
-        <div>
-          <label className="block text-sm text-gray-700 mb-1">Domain (optional)</label>
-          <input
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={domain}
-            onChange={(e) => setDomain(e.target.value)}
-            placeholder="app.example.com"
           />
         </div>
         {error && <p className="text-red-600 text-sm">{error}</p>}
