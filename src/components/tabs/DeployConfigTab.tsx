@@ -1,38 +1,50 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { getDeployConfig, listFrameworks, updateDeployConfig } from "../../api/projects";
-import type { DeployConfig, Framework } from "../../types/api";
+import type { Framework } from "../../types/api";
+
+const OVERRIDE_FIELDS = [
+  { key: "base_image_override",   label: "Base image",       fwKey: "base_image"   },
+  { key: "root_dir_override",     label: "Root directory",   fwKey: "root_dir"     },
+  { key: "output_dir_override",   label: "Output directory", fwKey: "output_dir"   },
+  { key: "install_cmd_override",  label: "Install command",  fwKey: "install_cmd"  },
+  { key: "build_cmd_override",    label: "Build command",    fwKey: "build_cmd"    },
+  { key: "run_cmd_override",      label: "Run command",      fwKey: "run_cmd"      },
+] as const;
+
+type OverrideKey = (typeof OVERRIDE_FIELDS)[number]["key"];
+type FwKey = (typeof OVERRIDE_FIELDS)[number]["fwKey"];
+
+type FormState = { framework_id: string } & Record<OverrideKey, string>;
 
 export function DeployConfigTab({ projectId }: { projectId: string }) {
-  const [config, setConfig] = useState<DeployConfig | null>(null);
   const [frameworks, setFrameworks] = useState<Framework[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading]       = useState(true);
+  const [saving, setSaving]         = useState(false);
+  const [saved, setSaved]           = useState(false);
+  const [error, setError]           = useState<string | null>(null);
 
-  const [form, setForm] = useState({
-    framework_id: "",
-    root_dir_override: "",
-    output_dir_override: "",
-    base_image_override: "",
-    install_cmd_override: "",
-    build_cmd_override: "",
-    run_cmd_override: "",
+  const [form, setForm] = useState<FormState>({
+    framework_id:          "",
+    base_image_override:   "",
+    root_dir_override:     "",
+    output_dir_override:   "",
+    install_cmd_override:  "",
+    build_cmd_override:    "",
+    run_cmd_override:      "",
   });
 
   useEffect(() => {
     Promise.all([getDeployConfig(projectId), listFrameworks()])
       .then(([cfg, fws]) => {
-        setConfig(cfg);
         setFrameworks(fws.items);
         setForm({
-          framework_id: cfg.framework_id,
-          root_dir_override: cfg.root_dir_override,
-          output_dir_override: cfg.output_dir_override,
-          base_image_override: cfg.base_image_override,
+          framework_id:         cfg.framework_id,
+          base_image_override:  cfg.base_image_override,
+          root_dir_override:    cfg.root_dir_override,
+          output_dir_override:  cfg.output_dir_override,
           install_cmd_override: cfg.install_cmd_override,
-          build_cmd_override: cfg.build_cmd_override,
-          run_cmd_override: cfg.run_cmd_override,
+          build_cmd_override:   cfg.build_cmd_override,
+          run_cmd_override:     cfg.run_cmd_override,
         });
       })
       .catch((e) => setError(e.message))
@@ -56,10 +68,9 @@ export function DeployConfigTab({ projectId }: { projectId: string }) {
   };
 
   if (loading) return <p className="text-gray-500 py-4">Loading…</p>;
-  if (!config) return <p className="text-red-600 py-4">{error}</p>;
+  if (error && !form.framework_id) return <p className="text-red-600 py-4">{error}</p>;
 
-  const selectedFramework = frameworks.find((fw) => fw.id === form.framework_id);
-  const isCustom = selectedFramework?.name === "Custom";
+  const selectedFw = frameworks.find((fw) => fw.id === form.framework_id);
 
   return (
     <form onSubmit={handleSave} className="space-y-4 max-w-xl">
@@ -76,51 +87,43 @@ export function DeployConfigTab({ projectId }: { projectId: string }) {
         </select>
       </div>
 
-      {selectedFramework && !isCustom && (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 space-y-2">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Template defaults</p>
-          {[
-            ["Base image", selectedFramework.base_image],
-            ["Root dir", selectedFramework.root_dir],
-            ["Output dir", selectedFramework.output_dir],
-            ["Install command", selectedFramework.install_cmd],
-            ["Build command", selectedFramework.build_cmd],
-            ["Run command", selectedFramework.run_cmd],
-          ]
-            .filter(([, val]) => val)
-            .map(([label, val]) => (
-              <div key={label} className="flex gap-2 text-sm">
-                <span className="text-gray-500 w-32 shrink-0">{label}</span>
-                <span className="font-mono text-gray-800">{val}</span>
-              </div>
-            ))}
-        </div>
-      )}
+      <div className="space-y-3">
+        {OVERRIDE_FIELDS.map(({ key, label, fwKey }) => {
+          const fwDefault = selectedFw?.[fwKey as FwKey] ?? "";
+          const override  = form[key];
+          const resolved  = override || fwDefault;
 
-      {isCustom && (
-        <div className="space-y-3">
-          {(
-            [
-              ["Base image", "base_image_override", "python:3.12-slim"],
-              ["Root directory", "root_dir_override", "."],
-              ["Output directory", "output_dir_override", "."],
-              ["Install command", "install_cmd_override", "pip install -r requirements.txt"],
-              ["Build command", "build_cmd_override", ""],
-              ["Run command", "run_cmd_override", "python main.py"],
-            ] as [string, keyof typeof form, string][]
-          ).map(([label, key, placeholder]) => (
+          return (
             <div key={key}>
-              <label className="block text-sm text-gray-700 mb-1">{label}</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-sm text-gray-700">{label}</label>
+                {override && (
+                  <button
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, [key]: "" }))}
+                    className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    Reset to default
+                  </button>
+                )}
+              </div>
               <input
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={form[key]}
+                value={override}
                 onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
-                placeholder={placeholder}
+                placeholder={fwDefault || "—"}
               />
+              {override && fwDefault && (
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Default: <span className="font-mono">{fwDefault}</span>
+                  {" · "}
+                  Resolved: <span className="font-mono text-blue-600">{resolved}</span>
+                </p>
+              )}
             </div>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
 
       {error && <p className="text-red-600 text-sm">{error}</p>}
 
