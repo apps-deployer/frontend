@@ -1,9 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { createProject, deleteProject, listProjects } from "../api/projects";
+import { createProject, deleteProject, listFrameworks, listProjects } from "../api/projects";
 import { Layout } from "../components/Layout";
 import { Modal } from "../components/Modal";
-import type { Project } from "../types/api";
+import type { Framework, Project } from "../types/api";
 
 export function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -100,15 +100,26 @@ function CreateProjectModal({
 }) {
   const [name, setName] = useState("");
   const [repoUrl, setRepoUrl] = useState("");
+  const [frameworkId, setFrameworkId] = useState("");
+  const [frameworks, setFrameworks] = useState<Framework[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    listFrameworks()
+      .then((r) => {
+        setFrameworks(r.items);
+        if (r.items.length > 0) setFrameworkId(r.items[0].id);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setError(null);
     try {
-      const project = await createProject({ name, repo_url: repoUrl });
+      const project = await createProject({ name, repo_url: repoUrl, framework_id: frameworkId });
       onCreate(project);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Error");
@@ -139,6 +150,19 @@ function CreateProjectModal({
             required
             placeholder="https://github.com/user/repo"
           />
+        </div>
+        <div>
+          <label className="block text-sm text-gray-700 mb-1">Framework</label>
+          <select
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={frameworkId}
+            onChange={(e) => setFrameworkId(e.target.value)}
+            required
+          >
+            {frameworks.map((f) => (
+              <option key={f.id} value={f.id}>{f.name}</option>
+            ))}
+          </select>
         </div>
         {error && <p className="text-red-600 text-sm">{error}</p>}
         <div className="flex justify-end gap-2 pt-2">
