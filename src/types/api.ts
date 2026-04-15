@@ -57,6 +57,7 @@ export interface Job {
 export interface Artifact {
   id: string;
   image: string;
+  url: string | null;
   created_at: string;
 }
 

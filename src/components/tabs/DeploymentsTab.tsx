@@ -125,6 +125,16 @@ export function DeploymentsTab({ projectId, envs }: Props) {
                       )}
                     </div>
                   ))}
+                  {run.artifact?.url && (
+                    <a
+                      href={run.artifact.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline mt-1"
+                    >
+                      {run.artifact.url}
+                    </a>
+                  )}
                   {run.artifact && (
                     <p className="text-xs text-gray-500 font-mono mt-1">
                       Image: {run.artifact.image}
