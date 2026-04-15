@@ -137,10 +137,10 @@ function EnvModal({
     setError(null);
     try {
       if (env) {
-        await updateEnv(env.id, { name, target_branch: branch, domain_name: "" });
-        onSave({ ...env, name, target_branch: branch, domain_name: "" });
+        await updateEnv(env.id, { name, target_branch: branch,  });
+        onSave({ ...env, name, target_branch: branch,  });
       } else {
-        const created = await createEnv(projectId, { name, target_branch: branch, domain_name: "" });
+        const created = await createEnv(projectId, { name, target_branch: branch,  });
         onSave(created);
       }
     } catch (e: unknown) {
