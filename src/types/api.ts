@@ -10,7 +10,6 @@ export interface Env {
   name: string;
   project_id: string;
   target_branch: string;
-  domain_name: string;
 }
 
 export interface Var {

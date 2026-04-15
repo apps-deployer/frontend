@@ -37,7 +37,7 @@ export function listEnvs(projectId: string): Promise<{ items: Env[] }> {
 
 export function createEnv(
   projectId: string,
-  data: { name: string; target_branch: string; domain_name?: string }
+  data: { name: string; target_branch: string }
 ): Promise<Env> {
   return apiRequest(`/api/v1/projects/${projectId}/envs`, {
     method: "POST",
@@ -47,7 +47,7 @@ export function createEnv(
 
 export function updateEnv(
   envId: string,
-  data: { name: string; target_branch: string; domain_name?: string }
+  data: { name: string; target_branch: string }
 ): Promise<void> {
   return apiRequest(`/api/v1/envs/${envId}`, {
     method: "PUT",
