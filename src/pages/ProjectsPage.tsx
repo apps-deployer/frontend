@@ -38,12 +38,14 @@ export function ProjectsPage() {
         <h1 className="text-xl font-semibold text-gray-900">Projects</h1>
         <div className="flex items-center gap-2">
           {githubAppConfigUrl && (
-            <button
-              onClick={() => { window.location.href = githubAppConfigUrl; }}
+            <a
+              href={githubAppConfigUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               className="bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
             >
               Configure GitHub App
-            </button>
+            </a>
           )}
           <button
             onClick={() => setShowCreate(true)}
