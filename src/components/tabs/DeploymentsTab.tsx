@@ -28,6 +28,11 @@ export function DeploymentsTab({ projectId, envs }: Props) {
   };
 
   useEffect(load, [projectId, selectedEnv]);
+  useEffect(() => {
+    if (!runs.some((run) => run.status === "pending" || run.status === "running")) return;
+    const timer = window.setInterval(load, 4000);
+    return () => window.clearInterval(timer);
+  }, [runs, projectId, selectedEnv]);
 
   const envName = (envId: string) => envs.find((e) => e.id === envId)?.name ?? envId;
 

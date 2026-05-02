@@ -9,8 +9,7 @@ COPY . .
 
 # These are public URLs baked into the JS bundle, not secrets
 # hadolint ignore=DL3040
-ARG VITE_AUTH_URL
-ARG VITE_API_URL
+ARG VITE_API_BASE_URL
 
 RUN npm run build
 
