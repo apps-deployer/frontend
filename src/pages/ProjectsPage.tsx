@@ -1,6 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { getInstallationStatus, type InstallationStatus } from "../api/github";
 import { createProject, deleteProject, listFrameworks, listProjects } from "../api/projects";
 import { Layout } from "../components/Layout";
 import { Modal } from "../components/Modal";
@@ -11,7 +10,7 @@ export function ProjectsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
-  const [installation, setInstallation] = useState<InstallationStatus | null>(null);
+  const githubAppConfigUrl = import.meta.env.VITE_GH_APP_CONFIG_URL ?? "";
 
   const load = () => {
     setLoading(true);
@@ -22,11 +21,6 @@ export function ProjectsPage() {
   };
 
   useEffect(load, []);
-  useEffect(() => {
-    getInstallationStatus()
-      .then(setInstallation)
-      .catch(() => setInstallation(null));
-  }, []);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this project?")) return;
@@ -43,16 +37,12 @@ export function ProjectsPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-semibold text-gray-900">Projects</h1>
         <div className="flex items-center gap-2">
-          {installation?.install_url && (
+          {githubAppConfigUrl && (
             <button
-              onClick={() => { window.location.href = installation.install_url; }}
-              className={`text-sm font-medium px-4 py-2 rounded-lg transition-colors ${
-                installation.installed
-                  ? "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                  : "bg-gray-900 hover:bg-gray-800 text-white"
-              }`}
+              onClick={() => { window.location.href = githubAppConfigUrl; }}
+              className="bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
             >
-              {installation.installed ? "Manage GitHub App" : "Install GitHub App"}
+              Configure GitHub App
             </button>
           )}
           <button
