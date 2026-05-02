@@ -1,5 +1,5 @@
 import { afterEach, beforeEach } from "vitest";
-import { apiRequest, authRequest } from "../api/client";
+import { apiRequest } from "../api/client";
 
 const mockFetch = vi.fn();
 
@@ -22,13 +22,13 @@ function okJson(body: unknown, status = 200) {
 }
 
 describe("apiRequest", () => {
-  it("sends GET request to deployments service base URL", async () => {
+  it("sends GET request to gateway base URL", async () => {
     mockFetch.mockReturnValueOnce(okJson({ items: [] }));
 
     await apiRequest("/api/v1/projects");
 
     expect(mockFetch).toHaveBeenCalledWith(
-      "http://localhost:8000/api/v1/projects",
+      "http://localhost:8002/api/v1/projects",
       expect.objectContaining({ headers: expect.objectContaining({ "Content-Type": "application/json" }) })
     );
   });
@@ -85,16 +85,13 @@ describe("apiRequest", () => {
 
     await expect(apiRequest("/api/v1/projects/bad-id")).rejects.toThrow("Not found");
   });
-});
-
-describe("authRequest", () => {
-  it("sends request to auth service base URL", async () => {
+  it("sends auth requests through gateway base URL", async () => {
     mockFetch.mockReturnValueOnce(okJson({ id: "1" }));
 
-    await authRequest("/api/v1/auth/me");
+    await apiRequest("/api/v1/auth/me");
 
     expect(mockFetch).toHaveBeenCalledWith(
-      "http://localhost:8001/api/v1/auth/me",
+      "http://localhost:8002/api/v1/auth/me",
       expect.any(Object)
     );
   });

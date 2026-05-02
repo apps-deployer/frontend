@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
+import { getInstallationStatus, type InstallationStatus } from "../api/github";
 import { createProject, deleteProject, listFrameworks, listProjects } from "../api/projects";
 import { Layout } from "../components/Layout";
 import { Modal } from "../components/Modal";
@@ -10,6 +11,7 @@ export function ProjectsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [installation, setInstallation] = useState<InstallationStatus | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -20,6 +22,11 @@ export function ProjectsPage() {
   };
 
   useEffect(load, []);
+  useEffect(() => {
+    getInstallationStatus()
+      .then(setInstallation)
+      .catch(() => setInstallation(null));
+  }, []);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this project?")) return;
@@ -35,12 +42,26 @@ export function ProjectsPage() {
     <Layout>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-semibold text-gray-900">Projects</h1>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-        >
-          + New project
-        </button>
+        <div className="flex items-center gap-2">
+          {installation?.install_url && (
+            <button
+              onClick={() => { window.location.href = installation.install_url; }}
+              className={`text-sm font-medium px-4 py-2 rounded-lg transition-colors ${
+                installation.installed
+                  ? "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  : "bg-gray-900 hover:bg-gray-800 text-white"
+              }`}
+            >
+              {installation.installed ? "Manage GitHub App" : "Install GitHub App"}
+            </button>
+          )}
+          <button
+            onClick={() => setShowCreate(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          >
+            + New project
+          </button>
+        </div>
       </div>
 
       {loading && <p className="text-gray-500">Loading…</p>}
