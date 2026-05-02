@@ -5,6 +5,8 @@ import { Layout } from "../components/Layout";
 import { Modal } from "../components/Modal";
 import type { Framework, Project } from "../types/api";
 
+const GITHUB_HTTPS_CLONE_URL_PATTERN = /^https:\/\/github\.com\/[^/\s]+\/[^/\s]+\.git$/;
+
 export function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,10 +131,15 @@ function CreateProjectModal({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    const normalizedRepoUrl = repoUrl.trim();
+    if (!GITHUB_HTTPS_CLONE_URL_PATTERN.test(normalizedRepoUrl)) {
+      setError("Use the HTTPS clone URL from GitHub, for example https://github.com/user/repo.git");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
-      const project = await createProject({ name, repo_url: repoUrl, framework_id: frameworkId });
+      const project = await createProject({ name, repo_url: normalizedRepoUrl, framework_id: frameworkId });
       onCreate(project);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Error");
@@ -161,7 +168,9 @@ function CreateProjectModal({
             value={repoUrl}
             onChange={(e) => setRepoUrl(e.target.value)}
             required
-            placeholder="https://github.com/user/repo"
+            placeholder="https://github.com/user/repo.git"
+            pattern="https://github\.com/[^/\s]+/[^/\s]+\.git"
+            title="Use the HTTPS clone URL from GitHub, for example https://github.com/user/repo.git"
           />
         </div>
         <div>
