@@ -27,6 +27,7 @@ export interface DeployConfig {
   install_cmd_override: string;
   build_cmd_override: string;
   run_cmd_override: string;
+  app_port_override: number;
 }
 
 export interface Framework {
@@ -38,6 +39,7 @@ export interface Framework {
   install_cmd: string;
   build_cmd: string;
   run_cmd: string;
+  app_port: number;
 }
 
 export type RunStatus = "pending" | "running" | "success" | "failed";

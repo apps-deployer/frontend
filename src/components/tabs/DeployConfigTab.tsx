@@ -14,7 +14,7 @@ const OVERRIDE_FIELDS = [
 type OverrideKey = (typeof OVERRIDE_FIELDS)[number]["key"];
 type FwKey = (typeof OVERRIDE_FIELDS)[number]["fwKey"];
 
-type FormState = { framework_id: string } & Record<OverrideKey, string>;
+type FormState = { framework_id: string; app_port_override: string } & Record<OverrideKey, string>;
 
 export function DeployConfigTab({ projectId }: { projectId: string }) {
   const [frameworks, setFrameworks] = useState<Framework[]>([]);
@@ -31,6 +31,7 @@ export function DeployConfigTab({ projectId }: { projectId: string }) {
     install_cmd_override:  "",
     build_cmd_override:    "",
     run_cmd_override:      "",
+    app_port_override:     "",
   });
 
   useEffect(() => {
@@ -45,6 +46,7 @@ export function DeployConfigTab({ projectId }: { projectId: string }) {
           install_cmd_override: cfg.install_cmd_override,
           build_cmd_override:   cfg.build_cmd_override,
           run_cmd_override:     cfg.run_cmd_override,
+          app_port_override:    cfg.app_port_override ? String(cfg.app_port_override) : "",
         });
       })
       .catch((e) => setError(e.message))
@@ -57,7 +59,10 @@ export function DeployConfigTab({ projectId }: { projectId: string }) {
     setError(null);
     setSaved(false);
     try {
-      await updateDeployConfig(projectId, form);
+      await updateDeployConfig(projectId, {
+        ...form,
+        app_port_override: form.app_port_override ? Number(form.app_port_override) : 0,
+      });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (e: unknown) {
@@ -123,6 +128,33 @@ export function DeployConfigTab({ projectId }: { projectId: string }) {
             </div>
           );
         })}
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <label className="text-sm text-gray-700">Application port</label>
+          {form.app_port_override && (
+            <button
+              type="button"
+              onClick={() => setForm((prev) => ({ ...prev, app_port_override: "" }))}
+              className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+            >
+              Reset to default
+            </button>
+          )}
+        </div>
+        <input
+          type="number"
+          min={1}
+          max={65535}
+          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={form.app_port_override}
+          onChange={(e) => setForm((prev) => ({ ...prev, app_port_override: e.target.value }))}
+          placeholder={String(selectedFw?.app_port || 8080)}
+        />
+        <p className="text-xs text-gray-400 mt-0.5">
+          The application must listen on this port inside the container.
+        </p>
       </div>
 
       {error && <p className="text-red-600 text-sm">{error}</p>}
